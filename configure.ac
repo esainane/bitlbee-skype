@@ -14,11 +14,11 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 AC_INIT(
-    [bitlbee-steam],
+    [bitlbee-skype-plugin],
     [1.3.1],
-    [https://github.com/jgeboski/bitlbee-steam/issues],
-    [bitlbee-steam],
-    [https://github.com/jgeboski/bitlbee-steam],
+    [https://github.com/esainane/bitlbee-skype-plugin/issues],
+    [bitlbee-skype-plugin],
+    [https://github.com/esainane/bitlbee-skype-plugin],
     []
 )
 
@@ -65,7 +65,7 @@ AC_ARG_ENABLE(
 
 AS_IF(
     [test "x$DEBUG" == "xyes"],
-    [AC_DEFINE(DEBUG_STEAM, 1)
+    [AC_DEFINE(DEBUG_SKYPE, 1)
      AS_IF(
         [test "x$MINIMAL_FLAGS" == "xno"],
         [CFLAGS="$CFLAGS -Wall -Wformat-nonliteral -g -O0"]
@@ -96,6 +96,8 @@ AS_IF(
     )]
 )
 
-AC_CONFIG_FILES([Makefile steam/Makefile])
+AC_CONFIG_FILES([Makefile skype/Makefile])
 AC_SUBST([plugindir])
 AC_OUTPUT
+
+LT_INIT()
