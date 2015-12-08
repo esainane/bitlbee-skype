@@ -1446,27 +1446,27 @@ static GList *skype_away_states(struct im_connection *ic)
 	return l;
 }
 
-static char *skype_set_display_name(set_t *set, char *value)
+static char *skype_set_display_name(void *data, char *value)
 {
-	account_t *acc = set->data;
+	account_t *acc = data;
 	struct im_connection *ic = acc->ic;
 
 	skype_printf(ic, "SET PROFILE FULLNAME %s\n", value);
 	return value;
 }
 
-static char *skype_set_mood_text(set_t *set, char *value)
+static char *skype_set_mood_text(void *data, char *value)
 {
-	account_t *acc = set->data;
+	account_t *acc = data;
 	struct im_connection *ic = acc->ic;
 
 	skype_printf(ic, "SET PROFILE MOOD_TEXT %s\n", value);
 	return value;
 }
 
-static char *skype_set_balance(set_t *set, char *value)
+static char *skype_set_balance(void *data, char *value)
 {
-	account_t *acc = set->data;
+	account_t *acc = data;
 	struct im_connection *ic = acc->ic;
 
 	skype_printf(ic, "GET PROFILE PSTN_BALANCE\n");
@@ -1499,9 +1499,9 @@ static void skype_hangup(struct im_connection *ic)
 	}
 }
 
-static char *skype_set_call(set_t *set, char *value)
+static char *skype_set_call(void *data, char *value)
 {
-	account_t *acc = set->data;
+	account_t *acc = data;
 	struct im_connection *ic = acc->ic;
 
 	if (value) {
@@ -1652,49 +1652,37 @@ static void skype_get_info(struct im_connection *ic, char *who)
 
 static void skype_init(account_t *acc)
 {
-	set_t *s;
+	set_add_with_flags(&acc->set, "server", SKYPE_DEFAULT_SERVER, set_eval_account,
+	            acc, ACC_SET_OFFLINE_ONLY);
 
-	s = set_add(&acc->set, "server", SKYPE_DEFAULT_SERVER, set_eval_account,
-	            acc);
-	s->flags |= ACC_SET_OFFLINE_ONLY;
+	set_add_with_flags(&acc->set, "port", SKYPE_DEFAULT_PORT, set_eval_int, acc, ACC_SET_OFFLINE_ONLY);
 
-	s = set_add(&acc->set, "port", SKYPE_DEFAULT_PORT, set_eval_int, acc);
-	s->flags |= ACC_SET_OFFLINE_ONLY;
+	set_add_with_flags(&acc->set, "display_name", NULL, skype_set_display_name,
+	            acc, SET_NOSAVE | ACC_SET_ONLINE_ONLY);
 
-	s = set_add(&acc->set, "display_name", NULL, skype_set_display_name,
-	            acc);
-	s->flags |= SET_NOSAVE | ACC_SET_ONLINE_ONLY;
+	set_add_with_flags(&acc->set, "mood_text", NULL, skype_set_mood_text, acc, SET_NOSAVE | ACC_SET_ONLINE_ONLY);
 
-	s = set_add(&acc->set, "mood_text", NULL, skype_set_mood_text, acc);
-	s->flags |= SET_NOSAVE | ACC_SET_ONLINE_ONLY;
+	set_add_with_flags(&acc->set, "call", NULL, skype_set_call, acc, SET_NOSAVE | ACC_SET_ONLINE_ONLY);
 
-	s = set_add(&acc->set, "call", NULL, skype_set_call, acc);
-	s->flags |= SET_NOSAVE | ACC_SET_ONLINE_ONLY;
+	set_add_with_flags(&acc->set, "balance", NULL, skype_set_balance, acc, SET_NOSAVE | ACC_SET_ONLINE_ONLY);
 
-	s = set_add(&acc->set, "balance", NULL, skype_set_balance, acc);
-	s->flags |= SET_NOSAVE | ACC_SET_ONLINE_ONLY;
+	set_add(&acc->set, "skypeout_offline", "true", set_eval_bool, acc);
 
-	s = set_add(&acc->set, "skypeout_offline", "true", set_eval_bool, acc);
+	set_add_with_flags(&acc->set, "skypeconsole", "false", set_eval_bool, acc, ACC_SET_OFFLINE_ONLY);
 
-	s = set_add(&acc->set, "skypeconsole", "false", set_eval_bool, acc);
-	s->flags |= ACC_SET_OFFLINE_ONLY;
+	set_add_with_flags(&acc->set, "skypeconsole_receive", "false", set_eval_bool,
+	            acc,	ACC_SET_OFFLINE_ONLY);
 
-	s = set_add(&acc->set, "skypeconsole_receive", "false", set_eval_bool,
-	            acc);
-	s->flags |= ACC_SET_OFFLINE_ONLY;
+	set_add_with_flags(&acc->set, "auto_join", "false", set_eval_bool, acc,	ACC_SET_OFFLINE_ONLY);
 
-	s = set_add(&acc->set, "auto_join", "false", set_eval_bool, acc);
-	s->flags |= ACC_SET_OFFLINE_ONLY;
+	set_add_with_flags(&acc->set, "test_join", "false", set_eval_bool, acc,	ACC_SET_OFFLINE_ONLY);
 
-	s = set_add(&acc->set, "test_join", "false", set_eval_bool, acc);
-	s->flags |= ACC_SET_OFFLINE_ONLY;
+	set_add(&acc->set, "show_moods", "false", set_eval_bool, acc);
 
-	s = set_add(&acc->set, "show_moods", "false", set_eval_bool, acc);
-
-	s = set_add(&acc->set, "edit_prefix", "EDIT:",
+	set_add(&acc->set, "edit_prefix", "EDIT:",
 	            NULL, acc);
 
-	s = set_add(&acc->set, "read_groups", "false", set_eval_bool, acc);
+	set_add(&acc->set, "read_groups", "false", set_eval_bool, acc);
 }
 
 #if BITLBEE_VERSION_CODE > BITLBEE_VER(3, 0, 1)
