@@ -375,7 +375,7 @@ static void skype_parse_user(struct im_connection *ic, char *line)
 		    && !strcmp(user, "echo123")) {
 			return;
 		}
-		ptr = g_strdup_printf("%s@skype.com", user);
+		ptr = g_strdup_printf("%s", user);
 		imcb_add_buddy(ic, ptr, skype_group_by_username(ic, user));
 		if (strcmp(status, "OFFLINE") && (strcmp(status, "SKYPEOUT") ||
 		                                  !set_getbool(&ic->acc->set, "skypeout_offline"))) {
@@ -394,12 +394,12 @@ static void skype_parse_user(struct im_connection *ic, char *line)
 	} else if (!strncmp(ptr, "BUDDYSTATUS ", 12)) {
 		char *st = ptr + 12;
 		if (!strcmp(st, "3")) {
-			char *buf = g_strdup_printf("%s@skype.com", user);
+			char *buf = g_strdup_printf("%s", user);
 			imcb_add_buddy(ic, buf, skype_group_by_username(ic, user));
 			g_free(buf);
 		}
 	} else if (!strncmp(ptr, "MOOD_TEXT ", 10)) {
-		char *buf = g_strdup_printf("%s@skype.com", user);
+		char *buf = g_strdup_printf("%s", user);
 		bee_user_t *bu = bee_user_by_handle(ic->bee, ic, buf);
 		g_free(buf);
 		buf = ptr + 10;
@@ -416,7 +416,7 @@ static void skype_parse_user(struct im_connection *ic, char *line)
 			sd->is_info = FALSE;
 			sd->info_fullname = g_strdup(name);
 		} else {
-			char *buf = g_strdup_printf("%s@skype.com", user);
+			char *buf = g_strdup_printf("%s", user);
 			imcb_rename_buddy(ic, buf, name);
 			g_free(buf);
 		}
@@ -684,7 +684,7 @@ static void skype_parse_chatmessage(struct im_connection *ic, char *line)
 		 * when we got the message's
 		 * body. */
 		g_free(sd->handle);
-		sd->handle = g_strdup_printf("%s@skype.com", info);
+		sd->handle = g_strdup_printf("%s", info);
 	} else if (!strncmp(info, "EDITED_BY ", 10)) {
 		info += 10;
 		/* This is the same as
@@ -693,7 +693,7 @@ static void skype_parse_chatmessage(struct im_connection *ic, char *line)
 		 * from Skype, we just get
 		 * them. */
 		g_free(sd->handle);
-		sd->handle = g_strdup_printf("%s@skype.com", info);
+		sd->handle = g_strdup_printf("%s", info);
 	} else if (!strncmp(info, "BODY ", 5)) {
 		info += 5;
 		sd->body = g_list_append(sd->body, g_strdup(info));
@@ -936,7 +936,7 @@ static void skype_group_users(struct im_connection *ic, struct skype_group *sg)
 
 	for (i = 0; i < g_list_length(sg->users); i++) {
 		char *user = g_list_nth_data(sg->users, i);
-		char *buf = g_strdup_printf("%s@skype.com", user);
+		char *buf = g_strdup_printf("%s", user);
 		imcb_add_buddy(ic, buf, sg->name);
 		g_free(buf);
 	}
@@ -1052,7 +1052,7 @@ static void skype_parse_chat(struct im_connection *ic, char *line)
 		 * window on our client, so
 		 * just leave it out. */
 		/*skype_printf(ic, "OPEN CHAT %s\n", id);*/
-		g_snprintf(buf, IRC_LINE_SIZE, "%s@skype.com",
+		g_snprintf(buf, IRC_LINE_SIZE, "%s",
 		           sd->groupchat_with);
 		imcb_chat_add_buddy(gc, buf);
 		g_free(sd->groupchat_with);
@@ -1065,7 +1065,7 @@ static void skype_parse_chat(struct im_connection *ic, char *line)
 	} else if (!strncmp(info, "ADDER ", 6)) {
 		info += 6;
 		g_free(sd->adder);
-		sd->adder = g_strdup_printf("%s@skype.com", info);
+		sd->adder = g_strdup_printf("%s", info);
 	} else if (!strncmp(info, "TOPIC ", 6)) {
 		info += 6;
 		gc = bee_chat_by_title(ic->bee, ic, id);
@@ -1098,7 +1098,7 @@ static void skype_parse_chat(struct im_connection *ic, char *line)
 			if (!strcmp(members[i], sd->username)) {
 				continue;
 			}
-			g_snprintf(buf, IRC_LINE_SIZE, "%s@skype.com",
+			g_snprintf(buf, IRC_LINE_SIZE, "%s",
 			           members[i]);
 			if (!g_list_find_custom(gc->in_room, buf,
 			                        (GCompareFunc) strcmp)) {
@@ -1185,7 +1185,7 @@ static void skype_parse_alter_group(struct im_connection *ic, char *line)
 
 		info += 8;
 		if (sg) {
-			char *buf = g_strdup_printf("%s@skype.com", info);
+			char *buf = g_strdup_printf("%s", info);
 			sg->users = g_list_append(sg->users, g_strdup(info));
 			imcb_add_buddy(ic, buf, sg->name);
 			g_free(buf);
