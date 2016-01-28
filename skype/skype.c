@@ -1724,6 +1724,11 @@ void *skype_buddy_action(struct bee_user *bu, const char *action, char * const a
 }
 #endif
 
+void skype_join(struct im_connection *ic, char **args) {
+	skype_printf(ic, "GET CHAT %s STATUS\n", args[1]);
+	skype_printf(ic, "GET CHAT %s ACTIVEMEMBERS\n", args[1]);
+}
+
 void init_plugin(void)
 {
 	struct prpl *ret = g_new0(struct prpl, 1);
@@ -1749,4 +1754,6 @@ void init_plugin(void)
 	ret->buddy_action = skype_buddy_action;
 #endif
 	register_protocol(ret);
+
+	plugin_command_add(ret, "join", 1, skype_join);
 }
