@@ -958,7 +958,7 @@ static void skype_parse_group(struct im_connection *ic, char *line)
 	}
 	*info = '\0';
 	info++;
-
+	fprintf(stderr, "Attempting to parse info in skype_parse_group: '%s'\n", info);
 	if (!strncmp(info, "DISPLAYNAME ", 12)) {
 		info += 12;
 
@@ -1021,6 +1021,7 @@ static void skype_parse_group(struct im_connection *ic, char *line)
 
 static void skype_parse_chat(struct im_connection *ic, char *line)
 {
+	fprintf(stderr, "SKYPE PLUGIN: PARSING CHAT: %s\n", line);
 	struct skype_data *sd = ic->proto_data;
 	char buf[IRC_LINE_SIZE];
 	char *id = strchr(line, ' ');
@@ -1079,6 +1080,7 @@ static void skype_parse_chat(struct im_connection *ic, char *line)
 			sd->adder = NULL;
 		}
 	} else if (!strncmp(info, "MEMBERS ", 8) || !strncmp(info, "ACTIVEMEMBERS ", 14)) {
+		fprintf(stderr, "SKYPE PLUGIN: PARSING CHAT MEMBERS/ACTIVEMEMBERS: %s\n", line);
 		if (!strncmp(info, "MEMBERS ", 8)) {
 			info += 8;
 		} else {
@@ -1090,6 +1092,7 @@ static void skype_parse_chat(struct im_connection *ic, char *line)
 		 * so that we won't rejoin
 		 * after a /part. */
 		if (!gc || gc->data) {
+			fprintf(stderr, "SKYPE PLUGIN: EARLY RETURN! HACK TO AVOID REJOIN AFTER PART: %s\n", line);
 			return;
 		}
 		char **members = g_strsplit(info, " ", 0);
@@ -1105,7 +1108,9 @@ static void skype_parse_chat(struct im_connection *ic, char *line)
 				imcb_chat_add_buddy(gc, buf);
 			}
 		}
-		imcb_chat_add_buddy(gc, sd->username);
+		char *me = g_strdup_printf("%s", sd->username);
+		imcb_chat_add_buddy(gc, me);
+		g_free(me);
 		g_strfreev(members);
 	}
 }
@@ -1301,6 +1306,7 @@ gboolean skype_start_stream(struct im_connection *ic)
 
 	/* Auto join to bookmarked chats if requested.*/
 	if (set_getbool(&ic->acc->set, "auto_join")) {
+		// skype_printf(ic, "SEARCH CHATS\n");
 		skype_printf(ic, "SEARCH BOOKMARKEDCHATS\n");
 		skype_printf(ic, "SEARCH ACTIVECHATS\n");
 		skype_printf(ic, "SEARCH MISSEDCHATS\n");
@@ -1340,6 +1346,9 @@ static void skype_login(account_t *acc)
 	                      set_getint(&acc->set, "port"), FALSE, skype_connected, ic);
 	sd->fd = sd->ssl ? ssl_getfd(sd->ssl) : -1;
 	sd->username = g_strdup(acc->user);
+	imcb_selfname(ic, sd->username);
+
+	fprintf(stderr, "SELF NICK SET: %s\n", sd->username);
 
 	sd->ic = ic;
 
@@ -1725,6 +1734,7 @@ void *skype_buddy_action(struct bee_user *bu, const char *action, char * const a
 #endif
 
 void skype_join(struct im_connection *ic, char **args) {
+	fprintf(stderr, "SKYPE: Running custom skype join command %s %s\n", args[0], args[1]);
 	skype_printf(ic, "GET CHAT %s STATUS\n", args[1]);
 	skype_printf(ic, "GET CHAT %s ACTIVEMEMBERS\n", args[1]);
 }
