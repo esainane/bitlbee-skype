@@ -234,13 +234,27 @@ class MockedSkype:
 		return ret
 
 class SkypeApi:
-	def __init__(self, mock):
-		global options
+	def __init__(self, mock, username, password):
 		if not mock:
 			self.skype = Skype4Py.Skype()
 			self.skype.OnNotify = self.recv
-			if not options.dont_start_skype:
-				self.skype.Client.Start()
+			# Kill any already running client
+			if self.skype.Client.IsRunning:
+				self.skype.Client.Shutdown()
+				time.sleep(1)
+			# Manage skype startup ourselves.
+			r, w = os.pipe()
+			if os.fork() == 0:
+				os.dup2(r, sys.stdin.fileno())
+				os.close(r)
+				os.close(w)
+				os.setsid()
+				os.execlp('skype', 'skype', '--pipelogin')
+			else:
+				os.close(r)
+				os.write(w, '%s\n%s\n' % (username, password))
+				os.close(w)
+			self.skype = Skype4Py.Skype()
 		else:
 			self.skype = MockedSkype(mock)
 
@@ -374,8 +388,8 @@ def main(args=None):
 	parser.add_argument('-v', '--version', action='store_true', help='display version information')
 	parser.add_argument('-n', '--nofork',
 		action='store_true', help="don't run as daemon in the background")
-	parser.add_argument('-s', '--dont-start-skype', action='store_true',
-		help="assume that skype is running independently, don't try to start/stop it")
+	parser.add_argument('-u', '--skypeusername', help="Skype username")
+	parser.add_argument('-P', '--skypepassword', help="Skype password")
 	parser.add_argument('-m', '--mock', help='fake interactions with skype (only useful for tests)')
 	parser.add_argument('-d', '--debug', action='store_true', help='enable debug messages')
 	options = parser.parse_args(sys.argv[1:] if args is None else args)
@@ -429,7 +443,7 @@ def main(args=None):
 		dprint('skyped is started on port %s' % options.port)
 	server(options.host, options.port)
 	try:
-		skype = SkypeApi(options.mock)
+		skype = SkypeApi(options.mock, options.skypeusername, options.skypepassword)
 	except Skype4Py.SkypeAPIError, s:
 		sys.exit("%s. Are you sure you have started Skype?" % s)
 	gobject.timeout_add(2000, skype_idle_handler, skype)
