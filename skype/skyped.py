@@ -327,8 +327,6 @@ def main(args=None):
 	parser.add_argument('-l', '--log', metavar='path',
 		help='set the log file in background mode (default: none)')
 	parser.add_argument('-v', '--version', action='store_true', help='display version information')
-	parser.add_argument('-n', '--nofork',
-		action='store_true', help="don't run as daemon in the background")
 	parser.add_argument('-u', '--skypeusername', help="Skype username")
 	parser.add_argument('-P', '--skypepassword', help="Skype password")
 	parser.add_argument('-m', '--mock', help='fake interactions with skype (only useful for tests)')
@@ -369,19 +367,7 @@ def main(args=None):
 	if not options.port:
 		options.port = port
 	dprint("Parsing config file '%s' done, username is '%s'." % (cfgpath, options.config.username))
-	if not options.nofork:
-		pid = os.fork()
-		if pid == 0:
-			nullin = file(os.devnull, 'r')
-			nullout = file(os.devnull, 'w')
-			os.dup2(nullin.fileno(), sys.stdin.fileno())
-			os.dup2(nullout.fileno(), sys.stdout.fileno())
-			os.dup2(nullout.fileno(), sys.stderr.fileno())
-		else:
-			print 'skyped is started on port %s, pid: %d' % (options.port, pid)
-			sys.exit(0)
-	else:
-		dprint('skyped is started on port %s' % options.port)
+	dprint('skyped is started on port %s' % options.port)
 	server(options.host, options.port)
 	try:
 		skype = SkypeApi(options.mock, options.skypeusername, options.skypepassword)
