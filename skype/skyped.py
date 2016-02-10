@@ -37,17 +37,14 @@ __version__ = "0.1.1"
 import gobject
 
 def eh(type, value, tb):
-	global options
+	global skype, options
 
 	if type != KeyboardInterrupt:
 		print_exception(type, value, tb)
 	gobject.MainLoop().quit()
 	if options.conn:
 		options.conn.close()
-	try:
-		skype.skype.Client.Shutdown()
-	except NameError:
-		pass
+	skype.skype.Client.Shutdown()
 	sys.exit("Exiting.")
 
 sys.excepthook = eh
