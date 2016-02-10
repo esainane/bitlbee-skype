@@ -49,22 +49,6 @@ def eh(type, value, tb):
 
 sys.excepthook = eh
 
-def wait_for_lock(lock, timeout_to_print, timeout, msg):
-	start = time.time()
-	locked = lock.acquire(0)
-	while not(locked):
-		time.sleep(0.5)
-		if timeout_to_print and (time.time() - timeout_to_print > start):
-			dprint("%s: Waited %f seconds" % \
-					(msg, time.time() - start))
-			timeout_to_print = False
-		if timeout and (time.time() - timeout > start):
-			dprint("%s: Waited %f seconds, giving up" % \
-					(msg, time.time() - start))
-			return False
-		locked = lock.acquire(0)
-	return True
-
 def input_handler(fd, io_condition = None):
 	global options
 	global skype
@@ -320,49 +304,6 @@ class SkypeApi:
 			pass
 		except Skype4Py.SkypeAPIError, s:
 			dprint("Warning, sending '%s' failed (%s)." % (e, s))
-
-
-def serverloop(options, skype):
-	timeout = 1; # in seconds
-	skype_ping_period = 5
-	bitlbee_ping_period = 10
-	bitlbee_pong_timeout = 30
-	now = time.time()
-	skype_ping_start_time = now
-	bitlbee_ping_start_time = now
-	options.last_bitlbee_pong = now
-	in_error = []
-	handler_ok = True
-	while (len(in_error) == 0) and handler_ok and options.conn:
-		ready_to_read, ready_to_write, in_error = \
-			select.select([options.conn], [], [options.conn], \
-				timeout)
-		now = time.time()
-		handler_ok = len(in_error) == 0
-		if (len(ready_to_read) == 1) and handler_ok:
-			handler_ok = input_handler(ready_to_read.pop())
-			# don't ping bitlbee/skype if they already received data
-			now = time.time() # allow for the input_handler to take some time
-			bitlbee_ping_start_time = now
-			skype_ping_start_time = now
-			options.last_bitlbee_pong = now
-		if (now - skype_ping_period > skype_ping_start_time) and handler_ok:
-			handler_ok = skype_idle_handler(skype)
-			skype_ping_start_time = now
-		if now - bitlbee_ping_period > bitlbee_ping_start_time:
-			handler_ok = bitlbee_idle_handler(skype)
-			bitlbee_ping_start_time = now
-			if options.last_bitlbee_pong:
-				if (now - options.last_bitlbee_pong) > bitlbee_pong_timeout:
-					dprint("Bitlbee pong timeout")
-					# TODO is following line necessary? Should there be a options.conn.unwrap() somewhere?
-					# options.conn.shutdown()
-					if options.conn:
-						options.conn.close()
-					options.conn = False
-			else:
-				options.last_bitlbee_pong = now
-
 
 def main(args=None):
 	global options
